@@ -35,18 +35,3 @@ During the game:
 ●	After three penalties the game ends: a message "Game Over. Final Score: XXX" (where XXX is the final score) is sent on the serial line for 10 seconds, then the game restarts from the initial state.
 
 Before starting the game, the potentiometer Pot device can be used to set the difficulty L level  which could be a value in the range 1..4 (1 easiest, 4 most difficult). The level must affect the value of the factor F (so that the more difficult the game is, the greater the factor F must be). 
-
-________________________________________
-
-The assignment:
-
-●	Develop the game on the Arduino platform, implementing the embedded software in C using the Wiring framework. The game must be based on a superloop control architecture.
-○	Choose concrete values for parameters in order to have the best game play. 
-○	For any other aspect not specified, make the choice that you consider most appropriate.
-●	The deliverable must a zipped folder assignment-01.zip including two subfolders:
-○	src 
-■	 including the Arduino project source code
-○	doc, including
-■	a representation of the schema/breadboard using tools such as   TinkerCad or Fritzing or Eagle
-■	a short video (or the link to a video on the cloud) demonstrating the system
-
