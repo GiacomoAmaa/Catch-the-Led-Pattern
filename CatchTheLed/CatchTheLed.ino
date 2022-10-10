@@ -1,5 +1,6 @@
 #include "TimerOne.h"
 #include "EnableInterrupt.h"
+#include "support.h"
 
 #define POT_PIN A0
 #define LS_PIN 11
@@ -21,7 +22,7 @@ void loop() {
     int potNewValue = analogRead(POT_PIN);
     if(potValue != potNewValue ){
       set_difficulty(potNewValue);
-      Serial.println(get_difficulty());
+      Serial.println(String(get_difficulty()));
     }
     analogWrite(LS_PIN, get_intensity()); 
     fade();
@@ -34,33 +35,3 @@ void loop() {
     break;
   }
 }
-
-int diffScaler[] = {256, 512, 768, 1024};
-int diff = 1;
-int currIntensity = 0;
-int fadeAmount = 5;
-
-void set_difficulty(int newVal){
-    for (int i = 0; i < 4; i++){
-        if(newVal < diffScaler[i]){
-            diff = i + 1;
-            break;
-        }
-    }
-}
-
-int get_difficulty(){
-    return diff;
-}
-
-void fade(){
-  currIntensity += fadeAmount;
-  if (currIntensity == 0 || currIntensity == 255) {
-    fadeAmount = -fadeAmount ; 
-  }
-}
-
-int get_intensity(){
-  return currIntensity;
-}
-
