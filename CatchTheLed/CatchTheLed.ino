@@ -3,10 +3,10 @@
 #include "support.c"
 
 #define POT_PIN A0
-#define DIFF_SCALE 256
 
-int potValue;
+
 int difficulty;
+int potValue;
 enum game_state {MENU,START,SLEEP};
 int currentState;
 
@@ -20,7 +20,10 @@ void setup() {
 void loop() {
   switch(currentState){
     case MENU:
-    potHandler();
+    int potNewValue = anlogRead(POT_PIN);
+    if(potValue != potNewValue ){
+      set_diff(potNewValue);
+    }
 
     break;
     case START: 
