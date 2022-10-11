@@ -15,17 +15,19 @@ Sets the difficulty level based on the given value
 static int set_difficulty(int newVal){
   int i;
   for (i = 0; i < 4; i++){
-      if(newVal < diffScaler[i]){
-          return i + 1;
-        }
+    if(newVal < diffScaler[i]){
+      return i + 1;
+    }
   }
   return i;
 }
 
 void potentiometer_handler(int potPin){
   int potNewValue = analogRead(potPin);
+
   if(potValue != potNewValue ){
     int newDiff = set_difficulty(potNewValue);
+    
     if(newDiff != diff){
       Serial.println("Difficulty : " + String(newDiff));
       diff=newDiff;

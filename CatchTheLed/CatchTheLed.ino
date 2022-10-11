@@ -1,8 +1,10 @@
 #include "TimerOne.h"
-#include "EnableInterrupt.h"
+#include <avr/sleep.h>
+#include <EnableInterrupt.h>
 #include "Potentiometer.h"
 #include "Leds.h"
 #include "Buttons.h"
+#include "Utility.h"
 
 
 // Potentiometer
@@ -23,6 +25,7 @@
 #define B4_PIN 2
 
 // Time constants in ms
+#define TIME_BEFORE_SLEEP = 10000
 #define T1 2000
 #define T2 4000
 #define T3 10000
@@ -34,14 +37,17 @@
 #define PENALITY 3
 #define SLEEP 4
 
+// Buttons pin position
+int buttonPin[] = {B1_PIN, B2_PIN, B3_PIN, B4_PIN};
+
+// Green leds pin position
+int lnPin[] = {L1_PIN, L2_PIN, L3_PIN, L4_PIN};
+
 // Current game state
 int currentState;
 
 // Current timer count
 int timer;
-
-// Green leds pin position
-int lnPin[4];
 
 // Boolean for checking leds status
 int* lnStatus;
@@ -68,16 +74,13 @@ void setup() {
 
   setup_rng();
 
-  lnPin[0] = L1_PIN;
-  lnPin[1] = L2_PIN;
-  lnPin[2] = L3_PIN;
-  lnPin[3] = L4_PIN;
-
   lnStatus = (int*)malloc(sizeof(int)*4);
   lnPattern = (int*)malloc(sizeof(int)*4);
   for(int i=0; i<4; i++){
     lnStatus[i] = 0;
     lnPattern[i] = -1;
+    pinMode(lnPin[i], OUTPUT);
+    pinMode(buttonPin[i], INPUT);
   }
 
   currentState = 0;
@@ -89,6 +92,11 @@ void loop() {
     case MENU:
       potentiometer_handler(POT_PIN);
       pin_fade(LS_PIN);
+
+      /* TODO
+      timer che va in background quando passano 10 secondi manda a nanna.
+       reset timer dopo nanna  e dopo chg game mode reset
+      */
 
       break;
     case SEQUENCE:
@@ -122,3 +130,19 @@ void loop() {
       break;
   }
 }
+
+void wakeUp(){}
+
+
+/*
+void loop(){
+ Serial.println("GOING IN POWER DOWN IN 1s ...");
+ Serial.flush();
+ delay(1000);
+ 
+ set_sleep_mode(SLEEP_MODE_PWR_DOWN); 
+ sleep_enable();
+ sleep_mode(); 
+ Serial.println("WAKE UP");
+ sleep_disable(); 
+ */

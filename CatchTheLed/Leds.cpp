@@ -20,10 +20,6 @@ void pin_fade(int pin){
   delay(20);
 }
 
-void setup_rng(){
-  srand(time(NULL));
-}
-
 void reset_pattern(int* led_pattern){
   for(int i=0; i<4; i++){
     led_pattern[i] = -1;
