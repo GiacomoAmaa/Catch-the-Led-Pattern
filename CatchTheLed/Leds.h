@@ -13,6 +13,7 @@ Sets the seed for rng numbers
 */
 void setup_rng();
 
+void set_led(int* lnStatus, int* lnPin, int led_index, int status);
 /*
 Resets the given pattern
 */
