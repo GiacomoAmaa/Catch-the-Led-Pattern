@@ -1,5 +1,6 @@
 #include "Leds.h"
 #include <Arduino.h>
+#include <time.h>
 
 // Led brightness intensity
 int currIntensity = 0;
@@ -31,10 +32,6 @@ void set_led(int* lnStatus, int* lnPin, int led_index, int status){
     lnStatus[led_index] = status;
     digitalWrite(lnPin[led_index], status ? HIGH : LOW);
   }
-}
-
-void setup_rng(){
-  srand(time(NULL));
 }
 
 void reset_pattern(int* led_pattern){
