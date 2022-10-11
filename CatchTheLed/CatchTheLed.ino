@@ -1,10 +1,9 @@
-#include <avr/sleep.h>
 #include <EnableInterrupt.h>
+#include <avr/sleep.h>
 #include "Potentiometer.h"
 #include "Leds.h"
 #include "Buttons.h"
 #include "Utility.h"
-
 
 // Potentiometer
 #define POT_PIN A0
@@ -25,13 +24,17 @@
 
 // Time constants in ms
 #define TIME_BEFORE_SLEEP = 10000
-#define T1 2000
-#define T2 4000
-#define T3 10000
+
+#define START_WAIT 2000
+#define TIME_SEQ_DISPLAY 4000
+#define TIME_TO_INSERT 10000
+
+#define DIFFICULTY_MODIFIER 250
+#define DIFFICULTY_PROGRESS 150
 
 // Game states
 #define MENU 0
-#define SEQUENCE 1
+#define DISPLAY 1
 #define INSERT 2
 #define PENALITY 3
 #define SLEEP 4
@@ -44,28 +47,14 @@ int lnPin[] = {L1_PIN, L2_PIN, L3_PIN, L4_PIN};
 
 // Current game state
 int currentState;
-
-// Current timer count
-int timer;
+int currentTimeSeqDisplay;
+int currentTimeToInsert;
+int systemTimeAfterDisplay;
 
 // Boolean for checking leds status
 int* lnStatus;
-
 // Memorize pattern
 int* lnPattern;
-
-
-static void setLed(int led_index, int status){
-  if(status < 0 || status > 1){
-    Serial.println("Error: invalid led status.");
-    return;
-  }
-
-  if(lnStatus[led_index] != status){
-    lnStatus[led_index] = status;
-    digitalWrite(lnPin[led_index], status ? HIGH : LOW);
-  }
-}
 
 void setup() {
   Serial.begin(9600);
@@ -82,8 +71,10 @@ void setup() {
     pinMode(buttonPin[i], INPUT);
   }
 
-  currentState = 0;
-  timer = 0;
+  currentState = MENU;
+  systemTimeAfterDisplay = 0;
+  currentTimeSeqDisplay = TIME_SEQ_DISPLAY;
+  currentTimeToInsert = TIME_TO_INSERT;
 }
 
 void loop() {
@@ -98,21 +89,26 @@ void loop() {
       */
 
       break;
-    case SEQUENCE:
-      delay(T1);
+    case DISPLAY:
+      int timeSeqDisplay = currentTimeSeqDisplay-DIFFICULTY_MODIFIER*get_difficulty();
+
+      delay(START_WAIT);
       generate_pattern(lnPattern);
       for(int i=0; i<4; i++){
-        setLed(i, lnPattern[i]);
+        set_led(lnStatus, lnPin, i, lnPattern[i]);
       }
-      delay(T2);
+      delay(timeSeqDisplay);
       for(int i=0; i<4; i++){
-        setLed(i, 0);
+        set_led(lnStatus, lnPin, i, 0);
       }
+
       currentState = INSERT;
-      timer = millis();
+      systemTimeAfterDisplay = millis();
       break;
     case INSERT:
-      if(millis() - timer >= T3){
+      int timeToInsert = currentTimeToInsert-DIFFICULTY_MODIFIER*get_difficulty();
+
+      if(millis() - systemTimeAfterDisplay >= timeToInsert){
         currentState = PENALITY;
         break;
       }

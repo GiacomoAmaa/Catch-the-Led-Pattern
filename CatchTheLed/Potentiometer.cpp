@@ -12,7 +12,7 @@ int potValue = 0;
 /*
 Sets the difficulty level based on the given value
 */
-static int set_difficulty(int newVal){
+int set_difficulty(int newVal){
   int i;
   for (i = 0; i < 4; i++){
     if(newVal < diffScaler[i]){
@@ -20,6 +20,10 @@ static int set_difficulty(int newVal){
     }
   }
   return i;
+}
+
+int get_difficulty(){
+  return diff;
 }
 
 void potentiometer_handler(int potPin){
