@@ -15,4 +15,4 @@ void setup_rng();
 /*
 Activates sleep mode 
 */
-void sleep();
+void sleep(int bp[]);

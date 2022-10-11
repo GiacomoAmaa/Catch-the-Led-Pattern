@@ -1,5 +1,6 @@
 #include "Utility.h"
 
+#include <EnableInterrupt.h>
 // keeps track if a message has been sent or not
 int sent = 0;
 
@@ -14,12 +15,20 @@ void say_welcome(){
   }
 }
 
-void sleep(){
+void wakeUp(){}
+
+void sleep(int bp[]){
+  for (int i=0; i<4; i++){
+    enableInterrupt(bp[i], wakeUp, CHANGE);
+  }
+  enableInterrupt(5, wakeUp,CHANGE);
   set_sleep_mode(SLEEP_MODE_PWR_DOWN);
   sleep_enable();
   sleep_mode();
-  Serial.println("WAKE UP");
   sleep_disable();
+  for (int i=0; i<4; i++){
+    disableInterrupt(bp[i]);
+  }
 }
 
-void wakeUp(){}
+

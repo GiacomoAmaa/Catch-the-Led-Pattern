@@ -1,4 +1,3 @@
-#include <EnableInterrupt.h>
 #include <avr/sleep.h>
 #include "Potentiometer.h"
 #include "Leds.h"
@@ -78,52 +77,49 @@ void setup() {
 }
 
 void loop() {
-  switch(currentState){
-    case MENU:
-      potentiometer_handler(POT_PIN);
-      pin_fade(LS_PIN);
-
+  if(currentState == MENU){
+    say_welcome();
+    potentiometer_handler(POT_PIN);
+    pin_fade(LS_PIN);
       /* TODO
       timer che va in background quando passano 10 secondi manda a nanna.
        reset timer dopo nanna  e dopo chg game mode reset
       */
-
-      break;
-    case DISPLAY:
-      int timeSeqDisplay = currentTimeSeqDisplay-DIFFICULTY_MODIFIER*get_difficulty();
-
-      delay(START_WAIT);
-      generate_pattern(lnPattern);
-      for(int i=0; i<4; i++){
-        set_led(lnStatus, lnPin, i, lnPattern[i]);
-      }
-      delay(timeSeqDisplay);
-      for(int i=0; i<4; i++){
-        set_led(lnStatus, lnPin, i, 0);
-      }
-
-      currentState = INSERT;
-      systemTimeAfterDisplay = millis();
-      break;
-    case INSERT:
-      int timeToInsert = currentTimeToInsert-DIFFICULTY_MODIFIER*get_difficulty();
+      currentState = SLEEP;
+  }
+  else if(currentState == DISPLAY){
+    int timeSeqDisplay = currentTimeSeqDisplay-DIFFICULTY_MODIFIER*get_difficulty();
+    delay(START_WAIT);
+    generate_pattern(lnPattern);
+    for(int i=0; i<4; i++){
+      set_led(lnStatus, lnPin, i, lnPattern[i]);
+    }
+    delay(timeSeqDisplay);
+    for(int i=0; i<4; i++){
+      set_led(lnStatus, lnPin, i, 0);
+    }
+    currentState = INSERT;
+    systemTimeAfterDisplay = millis();
+  }
+  else if(currentState == INSERT){
+    int timeToInsert = currentTimeToInsert-DIFFICULTY_MODIFIER*get_difficulty();
 
       if(millis() - systemTimeAfterDisplay >= timeToInsert){
         currentState = PENALITY;
-        break;
       }
       // controllo pressione bottoni
-      break;
-    case PENALITY:
+  }
+  else if(currentState == PENALITY){
       digitalWrite(LS_PIN, HIGH);
       Serial.println("Penality!");
       delay(1000);
       digitalWrite(LS_PIN, LOW);
       currentState = MENU;
-      break;
-    case SLEEP:
-      sleep();
-      break;
   }
+  else if(currentState == SLEEP){
+    sleep(buttonPin);
+    currentState=MENU;
+  }
+  
 }
 
