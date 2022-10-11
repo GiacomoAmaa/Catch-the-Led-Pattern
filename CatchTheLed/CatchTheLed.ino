@@ -73,14 +73,15 @@ void setup() {
 
   currentState = MENU;
 
-  systemTimeAfterDisplay = 0;
-  systemTimeIdling = 0;
   currentTimeSeqDisplay = TIME_SEQ_DISPLAY;
   currentTimeToInsert = TIME_TO_INSERT;
+  systemTimeAfterDisplay = 0;
+  systemTimeIdling = 0;
 }
 
 void loop() {
   if(currentState == MENU){
+    systemTimeIdling = systemTimeIdling == 0 ? millis() : systemTimeIdling;
     say_welcome();
     potentiometer_handler(POT_PIN);
     pin_fade(LS_PIN);
@@ -88,8 +89,9 @@ void loop() {
       timer che va in background quando passano 10 secondi manda a nanna.
        reset timer dopo nanna  e dopo chg game mode reset
       */
-    if(millis() - systemTimeAfterDisplay >= TIME_BEFORE_SLEEP){
+    if(millis() - systemTimeIdling >= TIME_BEFORE_SLEEP){
       currentState = SLEEP;
+      systemTimeIdling = 0;
     }
   }
   else if(currentState == DISPLAY){
