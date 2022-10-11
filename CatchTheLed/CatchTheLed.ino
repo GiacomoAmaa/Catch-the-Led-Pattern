@@ -22,7 +22,7 @@
 #define B4_PIN 2
 
 // Time constants in ms
-#define TIME_BEFORE_SLEEP = 10000
+#define TIME_BEFORE_SLEEP 10000
 
 #define START_WAIT 2000
 #define TIME_SEQ_DISPLAY 4000
@@ -49,6 +49,7 @@ int currentState;
 int currentTimeSeqDisplay;
 int currentTimeToInsert;
 int systemTimeAfterDisplay;
+int systemTimeIdling;
 
 // Boolean for checking leds status
 int* lnStatus;
@@ -71,7 +72,9 @@ void setup() {
   }
 
   currentState = MENU;
+
   systemTimeAfterDisplay = 0;
+  systemTimeIdling = 0;
   currentTimeSeqDisplay = TIME_SEQ_DISPLAY;
   currentTimeToInsert = TIME_TO_INSERT;
 }
@@ -85,7 +88,9 @@ void loop() {
       timer che va in background quando passano 10 secondi manda a nanna.
        reset timer dopo nanna  e dopo chg game mode reset
       */
+    if(millis() - systemTimeAfterDisplay >= TIME_BEFORE_SLEEP){
       currentState = SLEEP;
+    }
   }
   else if(currentState == DISPLAY){
     int timeSeqDisplay = currentTimeSeqDisplay-DIFFICULTY_MODIFIER*get_difficulty();
