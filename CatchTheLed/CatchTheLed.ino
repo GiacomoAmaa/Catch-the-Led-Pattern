@@ -5,8 +5,6 @@
 #include "Buttons.h"
 #include "Utility.h"
 
-#define EI_ARDUINO_INTERRUPTED_PIN
-
 // Potentiometer
 #define POT_PIN A0
 
@@ -31,8 +29,11 @@
 #define TIME_SEQ_DISPLAY 4000
 #define TIME_TO_INSERT 10000
 
-#define DIFFICULTY_MODIFIER 250
-#define DIFFICULTY_PROGRESS 150
+#define DIFF_MODIFIER 250
+#define DIFF_PROG_MODIFIER 50
+#define DIFF_PROGRESS 150
+
+#define ERRORS_ALLOWED 3
 
 // Game states
 #define MENU 0
@@ -58,6 +59,10 @@ int systemTimeIdling;
 int* lnStatus;
 // Memorize pattern
 int* lnPattern;
+int* lnPressed;
+
+int errors;
+int score;
 
 void setup() {
   Serial.begin(9600);
@@ -67,9 +72,11 @@ void setup() {
 
   lnStatus = (int*)malloc(sizeof(int)*4);
   lnPattern = (int*)malloc(sizeof(int)*4);
+  lnPressed = (int*)malloc(sizeof(int)*4);
   for(int i=0; i<4; i++){
     lnStatus[i] = 0;
     lnPattern[i] = -1;
+    lnPressed[i] = 0;
     pinMode(lnPin[i], OUTPUT);
     pinMode(buttonPin[i], INPUT);
     enableInterrupt(buttonPin[i], button_on_press, CHANGE);
@@ -81,24 +88,32 @@ void setup() {
   currentTimeToInsert = TIME_TO_INSERT;
   systemTimeAfterDisplay = 0;
   systemTimeIdling = 0;
+
+  errors = 0;
+  score = 0;
+
+  generate_pattern(lnPattern);
 }
 
 void button_on_press(){
-  if(currentState == MENU && arduinoInterruptedPin == B1_PIN){
+  int indexInterrupted = -1;
+  int interruptedPin = get_interrupt_pin(buttonPin, &indexInterrupted);
+  if(interruptedPin == -1){
+    Serial.println("Error: cant get button pin that generated the interrupt");
+    return;
+  }
+
+  if(currentState == MENU && interruptedPin == B1_PIN){
     currentState = DISPLAY;
   } else if(currentState == DISPLAY) {
     Serial.println("You pressed a button too early!");
     currentState = PENALITY;
   } else if(currentState == INSERT) {
-    int p = findPosition(buttonPin, 4, arduinoInterruptedPin);
-    if (p < 0) {
-      Serial.println("Error: cant find out which was button pressed.");
-      return;
-    }
-
-    if (array_contains(lnPattern, 4, lnPin[p]) == 0){
+    if (lnPattern[indexInterrupted] == 0){
       Serial.println("This led was not lighten up!");
       currentState = PENALITY;
+    } else {
+      lnPressed[indexInterrupted] = 1;
     }
   }
 }
@@ -111,10 +126,21 @@ void changeState(int newState){
   }
 }
 
+void reset(){
+  reset_pattern(lnPattern, lnPressed);
+  errors = 0;
+  score = 0;
+  currentTimeSeqDisplay = TIME_SEQ_DISPLAY;
+  currentTimeToInsert = TIME_TO_INSERT;
+  systemTimeAfterDisplay = 0;
+  systemTimeIdling = 0;
+  changeState(MENU);
+}
+
 void loop() {
   if(currentState == MENU){
     systemTimeIdling = systemTimeIdling == 0 ? millis() : systemTimeIdling;
-    say_welcome();
+    //say_welcome();
     potentiometer_handler(POT_PIN);
     pin_fade(LS_PIN);
       /* TODO
@@ -127,9 +153,8 @@ void loop() {
     }
   }
   else if(currentState == DISPLAY){
-    int timeSeqDisplay = currentTimeSeqDisplay-DIFFICULTY_MODIFIER*get_difficulty();
+    int timeSeqDisplay = currentTimeSeqDisplay-DIFF_MODIFIER*get_difficulty();
     delay(START_WAIT);
-    generate_pattern(lnPattern);
     for(int i=0; i<4; i++){
       set_led(lnStatus, lnPin, i, lnPattern[i]);
     }
@@ -141,10 +166,17 @@ void loop() {
     systemTimeAfterDisplay = millis();
   }
   else if(currentState == INSERT){
-    int timeToInsert = currentTimeToInsert-DIFFICULTY_MODIFIER*get_difficulty();
+    int timeToInsert = currentTimeToInsert-DIFF_MODIFIER*get_difficulty();
 
     if(millis() - systemTimeAfterDisplay >= timeToInsert){
       changeState(PENALITY);
+    } else if(check_score(lnPattern, lnPressed) == 1){
+      score++;
+      Serial.println("New point! Score: " + String(score));
+      currentTimeToInsert -= DIFF_PROGRESS + DIFF_PROG_MODIFIER*get_difficulty();
+      currentTimeSeqDisplay -= DIFF_PROGRESS + DIFF_PROG_MODIFIER*get_difficulty();
+      reset_pattern(lnPattern, lnPressed);
+      changeState(DISPLAY);
     }
   }
   else if(currentState == PENALITY){
@@ -152,7 +184,15 @@ void loop() {
       Serial.println("Penality!");
       delay(1000);
       digitalWrite(LS_PIN, LOW);
-      changeState(MENU);
+
+      errors++;
+      if(errors >= ERRORS_ALLOWED){
+        Serial.println("Game Over. Final score: " + String(score));
+        delay(10000);
+        reset();
+      } else {
+        changeState(DISPLAY);
+      }
   }
   else if(currentState == SLEEP){
     sleep(buttonPin);
