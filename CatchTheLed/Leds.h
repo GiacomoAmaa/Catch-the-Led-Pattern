@@ -1,10 +1,6 @@
 #include <time.h>
 #include <stdlib.h>
-
-/*
-Sets the difficulty level based on the given value
-*/
-int set_difficulty(int NewVal);
+#include <Arduino.h>
 
 /*
 Calculates the next intensity value to make a led fade
@@ -20,6 +16,11 @@ int get_intensity();
 Sets the seed for rng numbers
 */
 void setup_rng();
+
+/*
+Resets the given pattern
+*/
+void reset_pattern(int* led_pattern);
 
 /*
 Generates a random led pattern

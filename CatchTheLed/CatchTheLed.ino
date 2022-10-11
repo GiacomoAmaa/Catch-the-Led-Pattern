@@ -1,6 +1,8 @@
 #include "TimerOne.h"
 #include "EnableInterrupt.h"
-#include "support.h"
+#include "Potentiometer.h"
+#include "Leds.h"
+#include "Buttons.h"
 
 // Potentiometer
 #define POT_PIN A0

@@ -1,27 +1,10 @@
-#include "support.h"
-
-// Mapper for analog values in 4 difficulty levels
-int diffScaler[] = {256, 512, 768, 1024};
-
-// Current difficulty
-int diff = 1;
+#include "Leds.h"
 
 // Led brightness intensity
 int currIntensity = 0;
 
 // Intensity change factor
 int fadeAmount = 5;
-
-
-int set_difficulty(int newVal){
-  int i;
-  for (i = 0; i < 4; i++){
-      if(newVal < diffScaler[i]){
-          return i + 1;
-        }
-  }
-  return i;
-}
 
 void fade(){
   currIntensity += fadeAmount;
