@@ -4,12 +4,12 @@
 #include "Leds.h"
 #include "Buttons.h"
 
+
 // Potentiometer
 #define POT_PIN A0
 
 // Red led pins
 #define LS_PIN 11
-
 // Green led pins
 #define L1_PIN 13
 #define L2_PIN 12
@@ -33,12 +33,6 @@
 #define INSERT 2
 #define PENALITY 3
 #define SLEEP 4
-
-// Potentiometer current value
-int potValue;
-
-// Current difficulty
-int difficulty;
 
 // Current game state
 int currentState;
@@ -68,24 +62,6 @@ static void setLed(int led_index, int status){
   }
 }
 
-// Reads the potentiometer and refreshes the difficulty
-static void potentiometer_handler(){
-  int potNewValue = analogRead(POT_PIN);
-  if(potValue != potNewValue ){
-    int newDiff = set_difficulty(potNewValue);
-    if(newDiff != difficulty){
-      Serial.println(String(newDiff));
-      difficulty=newDiff;
-    }
-  }
-}
-
-static void pin_fade(int pin){
-  analogWrite(pin, get_intensity());
-  fade();
-  delay(20);
-}
-
 void setup() {
   Serial.begin(9600);
   pinMode(LS_PIN, OUTPUT);
@@ -105,15 +81,13 @@ void setup() {
   }
 
   currentState = 0;
-  potValue = 0;
   timer = 0;
-  difficulty = 1;
 }
 
 void loop() {
   switch(currentState){
     case MENU:
-      potentiometer_handler();
+      potentiometer_handler(POT_PIN);
       pin_fade(LS_PIN);
 
       break;

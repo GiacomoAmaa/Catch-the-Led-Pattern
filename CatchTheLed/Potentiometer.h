@@ -1,6 +1,6 @@
 #include <Arduino.h>
 
 /*
-Sets the difficulty level based on the given value
+Reads the potentiometer analog value and refreshes the difficulty
 */
-int set_difficulty(int NewVal);
+void potentiometer_handler(int potPin);

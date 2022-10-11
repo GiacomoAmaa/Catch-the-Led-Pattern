@@ -6,15 +6,18 @@ int currIntensity = 0;
 // Intensity change factor
 int fadeAmount = 5;
 
-void fade(){
+
+static void fade(){
   currIntensity += fadeAmount;
   if (currIntensity == 0 || currIntensity == 255) {
     fadeAmount = -fadeAmount ; 
   }
 }
 
-int get_intensity(){
-  return currIntensity;
+void pin_fade(int pin){
+  analogWrite(pin, currIntensity);
+  fade();
+  delay(20);
 }
 
 void setup_rng(){

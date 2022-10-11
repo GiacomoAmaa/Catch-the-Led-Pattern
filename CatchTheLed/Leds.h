@@ -2,15 +2,11 @@
 #include <stdlib.h>
 #include <Arduino.h>
 
-/*
-Calculates the next intensity value to make a led fade
-*/
-void fade();
 
 /*
-Returns the intensity to assign to fading led
+makes the specified pin fade
 */
-int get_intensity();
+void pin_fade(int pin);
 
 /*
 Sets the seed for rng numbers
