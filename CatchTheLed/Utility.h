@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <time.h>
+#include <avr/sleep.h>
 
 /*
 Prints a welcome string on the serial line
@@ -14,3 +15,4 @@ void setup_rng();
 /*
 Activates sleep mode 
 */
+void sleep();

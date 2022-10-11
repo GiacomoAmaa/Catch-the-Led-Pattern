@@ -1,4 +1,3 @@
-#include "TimerOne.h"
 #include <avr/sleep.h>
 #include <EnableInterrupt.h>
 #include "Potentiometer.h"
@@ -126,23 +125,9 @@ void loop() {
       digitalWrite(LS_PIN, LOW);
       currentState = MENU;
       break;
-    case SLEEP: 
+    case SLEEP:
+      sleep();
       break;
   }
 }
 
-void wakeUp(){}
-
-
-/*
-void loop(){
- Serial.println("GOING IN POWER DOWN IN 1s ...");
- Serial.flush();
- delay(1000);
- 
- set_sleep_mode(SLEEP_MODE_PWR_DOWN); 
- sleep_enable();
- sleep_mode(); 
- Serial.println("WAKE UP");
- sleep_disable(); 
- */
