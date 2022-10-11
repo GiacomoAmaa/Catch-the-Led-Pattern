@@ -2,25 +2,46 @@
 #include "EnableInterrupt.h"
 #include "support.h"
 
+// Potentiometer
 #define POT_PIN A0
-#define LS_PIN 13
-#define L1_PIN 12
-#define L2_PIN 11
+
+// Red led pins
+#define LS_PIN 11
+
+// Green led pins
+#define L1_PIN 13
+#define L2_PIN 12
 #define L3_PIN 10
 #define L4_PIN 9
 
+// Button pins
+#define B1_PIN 5
+#define B2_PIN 4
+#define B3_PIN 3
+#define B4_PIN 2
+
+// Time constants in ms
 #define T1 2000
 #define T2 4000
 #define T3 10000
 
+// Game states
 #define MENU 0
 #define SEQUENCE 1
 #define INSERT 2
 #define PENALITY 3
 #define SLEEP 4
 
+// Potentiometer current value
 int potValue;
+
+// Current difficulty
+int difficulty;
+
+// Current game state
 int currentState;
+
+// Current timer count
 int timer;
 
 // Green leds pin position
@@ -31,6 +52,37 @@ int* lnStatus;
 
 // Memorize pattern
 int* lnPattern;
+
+
+static void setLed(int led_index, int status){
+  if(status < 0 || status > 1){
+    Serial.println("Error: invalid led status.");
+    return;
+  }
+
+  if(lnStatus[led_index] != status){
+    lnStatus[led_index] = status;
+    digitalWrite(lnPin[led_index], status ? HIGH : LOW);
+  }
+}
+
+// Reads the potentiometer and refreshes the difficulty
+static void potentiometer_handler(){
+  int potNewValue = analogRead(POT_PIN);
+  if(potValue != potNewValue ){
+    int newDiff = set_difficulty(potNewValue);
+    if(newDiff != difficulty){
+      Serial.println(String(newDiff));
+      difficulty=newDiff;
+    }
+  }
+}
+
+static void pin_fade(int pin){
+  analogWrite(pin, get_intensity());
+  fade();
+  delay(20);
+}
 
 void setup() {
   Serial.begin(9600);
@@ -53,31 +105,14 @@ void setup() {
   currentState = 0;
   potValue = 0;
   timer = 0;
-}
-
-void setLed(int led_index, int status){
-  if(status < 0 || status > 1){
-    Serial.println("Error: invalid led status.");
-    return;
-  }
-
-  if(lnStatus[led_index] != status){
-    lnStatus[led_index] = status;
-    digitalWrite(lnPin[led_index], status ? HIGH : LOW);
-  }
+  difficulty = 1;
 }
 
 void loop() {
   switch(currentState){
     case MENU:
-      int potNewValue = analogRead(POT_PIN);
-      if(potValue != potNewValue ){
-        set_difficulty(potNewValue);
-        Serial.println(String(get_difficulty()));
-      }
-      analogWrite(LS_PIN, get_intensity()); 
-      fade();
-      delay(20); 
+      potentiometer_handler();
+      pin_fade(LS_PIN);
 
       break;
     case SEQUENCE:
