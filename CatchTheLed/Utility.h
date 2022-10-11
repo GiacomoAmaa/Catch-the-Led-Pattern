@@ -5,7 +5,12 @@
 /*
 Prints a welcome string on the serial line
 */
-//void say_welcome();
+void say_welcome();
+
+/*
+Allows to salute again
+*/
+void reset_salute();
 
 /*
 Sets the seed for rng numbers
@@ -15,6 +20,6 @@ void setup_rng();
 /*
 Activates sleep mode 
 */
-void sleep(int bp[]);
+void sleep();
 
 int array_contains(int* array, int value);

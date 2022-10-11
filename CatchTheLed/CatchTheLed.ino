@@ -1,9 +1,11 @@
 #include <avr/sleep.h>
-#include <EnableInterrupt.h>
 #include "Potentiometer.h"
 #include "Leds.h"
 #include "Buttons.h"
 #include "Utility.h"
+#define EI_ARDUINO_INTERRUPTED_PIN
+#include <EnableInterrupt.h>
+
 
 // Potentiometer
 #define POT_PIN A0
@@ -96,13 +98,22 @@ void setup() {
 }
 
 void button_on_press(){
+  //OOOK
   int indexInterrupted = -1;
-  int interruptedPin = get_interrupt_pin(buttonPin, &indexInterrupted);
-  if(interruptedPin == -1){
-    Serial.println("Error: cant get button pin that generated the interrupt");
-    return;
+  int interruptedPin = arduinoInterruptedPin;
+  for(int i = 0; i < 4; i++ ){
+    if(buttonPin[i] == interruptedPin){
+      indexInterrupted = i;
+      break;
+    }
   }
+  /*
+  Serial.println("pressed button "+ String(indexInterrupted) + "with pin" + String(interruptedPin));
+  delay(200);
+  */
 
+  /**FIXARE BOUNCING**/
+  //NON VA UN CAZZO
   if(currentState == MENU && interruptedPin == B1_PIN){
     currentState = DISPLAY;
   } else if(currentState == DISPLAY) {
@@ -140,7 +151,7 @@ void reset(){
 void loop() {
   if(currentState == MENU){
     systemTimeIdling = systemTimeIdling == 0 ? millis() : systemTimeIdling;
-    //say_welcome();
+    say_welcome();
     potentiometer_handler(POT_PIN);
     pin_fade(LS_PIN);
       /* TODO
@@ -150,6 +161,7 @@ void loop() {
     if(millis() - systemTimeIdling >= TIME_BEFORE_SLEEP){
       changeState(SLEEP);
       systemTimeIdling = 0;
+      reset_salute();
     }
   }
   else if(currentState == DISPLAY){
@@ -195,7 +207,7 @@ void loop() {
       }
   }
   else if(currentState == SLEEP){
-    sleep(buttonPin);
+    sleep();
     changeState(MENU);
   }
   
