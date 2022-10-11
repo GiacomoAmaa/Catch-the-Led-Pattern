@@ -16,3 +16,7 @@ void setup_rng();
 Activates sleep mode 
 */
 void sleep(int bp[]);
+
+int array_contains(int* array, int value);
+
+int findPosition(int* buttonPin, int length, int button);

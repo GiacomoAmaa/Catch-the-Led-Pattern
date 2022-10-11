@@ -1,8 +1,11 @@
 #include <avr/sleep.h>
+#include <EnableInterrupt.h>
 #include "Potentiometer.h"
 #include "Leds.h"
 #include "Buttons.h"
 #include "Utility.h"
+
+#define EI_ARDUINO_INTERRUPTED_PIN
 
 // Potentiometer
 #define POT_PIN A0
@@ -69,6 +72,7 @@ void setup() {
     lnPattern[i] = -1;
     pinMode(lnPin[i], OUTPUT);
     pinMode(buttonPin[i], INPUT);
+    enableInterrupt(buttonPin[i], button_on_press, CHANGE);
   }
 
   currentState = MENU;
@@ -77,6 +81,34 @@ void setup() {
   currentTimeToInsert = TIME_TO_INSERT;
   systemTimeAfterDisplay = 0;
   systemTimeIdling = 0;
+}
+
+void button_on_press(){
+  if(currentState == MENU && arduinoInterruptedPin == B1_PIN){
+    currentState = DISPLAY;
+  } else if(currentState == DISPLAY) {
+    Serial.println("You pressed a button too early!");
+    currentState = PENALITY;
+  } else if(currentState == INSERT) {
+    int p = findPosition(buttonPin, 4, arduinoInterruptedPin);
+    if (p < 0) {
+      Serial.println("Error: cant find out which was button pressed.");
+      return;
+    }
+
+    if (array_contains(lnPattern, 4, lnPin[p]) == 0){
+      Serial.println("This led was not lighten up!");
+      currentState = PENALITY;
+    }
+  }
+}
+
+void changeState(int newState){
+  if(newState >= 0 && newState <= 4){
+    noInterrupts();
+    currentState = newState;
+    interrupts();
+  }
 }
 
 void loop() {
@@ -90,7 +122,7 @@ void loop() {
        reset timer dopo nanna  e dopo chg game mode reset
       */
     if(millis() - systemTimeIdling >= TIME_BEFORE_SLEEP){
-      currentState = SLEEP;
+      changeState(SLEEP);
       systemTimeIdling = 0;
     }
   }
@@ -105,27 +137,26 @@ void loop() {
     for(int i=0; i<4; i++){
       set_led(lnStatus, lnPin, i, 0);
     }
-    currentState = INSERT;
+    changeState(INSERT);
     systemTimeAfterDisplay = millis();
   }
   else if(currentState == INSERT){
     int timeToInsert = currentTimeToInsert-DIFFICULTY_MODIFIER*get_difficulty();
 
-      if(millis() - systemTimeAfterDisplay >= timeToInsert){
-        currentState = PENALITY;
-      }
-      // controllo pressione bottoni
+    if(millis() - systemTimeAfterDisplay >= timeToInsert){
+      changeState(PENALITY);
+    }
   }
   else if(currentState == PENALITY){
       digitalWrite(LS_PIN, HIGH);
       Serial.println("Penality!");
       delay(1000);
       digitalWrite(LS_PIN, LOW);
-      currentState = MENU;
+      changeState(MENU);
   }
   else if(currentState == SLEEP){
     sleep(buttonPin);
-    currentState=MENU;
+    changeState(MENU);
   }
   
 }
