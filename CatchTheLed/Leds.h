@@ -1,11 +1,16 @@
 #include <stdlib.h>
 #include <Arduino.h>
 
-
 /*
   makes the specified pin fade
 */
 void pin_fade(int pin);
+
+/*
+turns on/off specified led
+*/
+void led_write(uint8_t pin, uint8_t state);
+
 
 /*
   Sets the seed for rng numbers

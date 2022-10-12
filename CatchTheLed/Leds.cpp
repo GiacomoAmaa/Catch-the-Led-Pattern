@@ -56,3 +56,6 @@ int check_score(int* pattern, int* pressed){
   return 1;
 }
 
+void led_write(uint8_t pin, uint8_t state){
+  digitalWrite(pin, state);
+}

@@ -1,7 +1,5 @@
 #include "Utility.h"
 
-//#include <EnableInterrupt.h>
-
 // keeps track if a message has been sent or not
 int sent = 0;
 
@@ -21,6 +19,8 @@ void reset_salute(){
 }
 
 void sleep(){
+  Serial.println("Going to sleep... PRESS ANY BUTTON TO WAKE ME UP");
+  delay(100);
   set_sleep_mode(SLEEP_MODE_PWR_DOWN);
   sleep_enable();
   sleep_mode();

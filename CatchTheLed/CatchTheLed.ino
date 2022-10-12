@@ -55,7 +55,7 @@ int currentState;
 int currentTimeSeqDisplay;
 int currentTimeToInsert;
 int systemTimeAfterDisplay;
-int systemTimeIdling;
+unsigned long systemTimeIdling;
 
 // Boolean for checking leds status
 int* lnStatus;
@@ -81,7 +81,7 @@ void setup() {
     lnPressed[i] = 0;
     pinMode(lnPin[i], OUTPUT);
     pinMode(buttonPin[i], INPUT);
-    enableInterrupt(buttonPin[i], button_on_press, CHANGE);
+    enableInterrupt(buttonPin[i], button_on_press, RISING);
   }
 
   currentState = MENU;
@@ -97,8 +97,12 @@ void setup() {
   generate_pattern(lnPattern);
 }
 
+void identify(){
+
+}
+
 void button_on_press(){
-  //OOOK
+  identify();
   int indexInterrupted = -1;
   int interruptedPin = arduinoInterruptedPin;
   for(int i = 0; i < 4; i++ ){
@@ -107,19 +111,14 @@ void button_on_press(){
       break;
     }
   }
-  /*
-  Serial.println("pressed button "+ String(indexInterrupted) + "with pin" + String(interruptedPin));
-  delay(200);
-  */
-
   /**FIXARE BOUNCING**/
-  //NON VA UN CAZZO
   if(currentState == MENU && interruptedPin == B1_PIN){
     currentState = DISPLAY;
   } else if(currentState == DISPLAY) {
     Serial.println("You pressed a button too early!");
     currentState = PENALITY;
-  } else if(currentState == INSERT) {
+  } else if(currentState == INSERT) { 
+    /********in insert quando premi il bottone si deve accendere anche il led corrispondente**************/
     if (lnPattern[indexInterrupted] == 0){
       Serial.println("This led was not lighten up!");
       currentState = PENALITY;
@@ -154,19 +153,16 @@ void loop() {
     say_welcome();
     potentiometer_handler(POT_PIN);
     pin_fade(LS_PIN);
-      /* TODO
-      timer che va in background quando passano 10 secondi manda a nanna.
-       reset timer dopo nanna  e dopo chg game mode reset
-      */
     if(millis() - systemTimeIdling >= TIME_BEFORE_SLEEP){
       changeState(SLEEP);
       systemTimeIdling = 0;
       reset_salute();
+      led_write(LS_PIN, LOW);
     }
   }
   else if(currentState == DISPLAY){
-    int timeSeqDisplay = currentTimeSeqDisplay-DIFF_MODIFIER*get_difficulty();
-    delay(START_WAIT);
+    int timeSeqDisplay = currentTimeSeqDisplay - DIFF_MODIFIER * get_difficulty();
+    delay(START_WAIT); // deve essere random il tempo di apparizione
     for(int i=0; i<4; i++){
       set_led(lnStatus, lnPin, i, lnPattern[i]);
     }
@@ -199,6 +195,7 @@ void loop() {
 
       errors++;
       if(errors >= ERRORS_ALLOWED){
+        /** VA SPAMMATO PER 10 SEC NON INVIATO E POI ASPETTA 10 SEC**/
         Serial.println("Game Over. Final score: " + String(score));
         delay(10000);
         reset();
