@@ -180,7 +180,7 @@ void loop() {
       sent = 1;
     }
 
-    int timeSeqDisplay = currentTimeSeqDisplay - DIFF_MODIFIER * get_difficulty();
+    unsigned long timeSeqDisplay = currentTimeSeqDisplay - DIFF_MODIFIER * get_difficulty();
     delay(rng(START_WAIT_RANGE) + MINIMUM_WAIT_TIME);
     apply_led_status(lnStatus, lnPin, lnPattern);
     delay(timeSeqDisplay);
@@ -234,4 +234,3 @@ void loop() {
     changeState(MENU);
   }
 }
-
