@@ -13,11 +13,6 @@ Generates a random number in the given interval
 int rng(int max_range);
 
 /*
-Sends endgame message
-*/
-void end_game(int score);
-
-/*
 Activates sleep mode 
 */
 void sleep();

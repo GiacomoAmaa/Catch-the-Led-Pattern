@@ -34,11 +34,14 @@
 #define MINIMUM_INSERT_TIME 1500
 // modifiers in ms
 #define DIFF_MODIFIER 200
-#define DIFF_PROG_MODIFIER 50
+#define DIFF_PROG_MODIFIER 15
+
+// time to wait for a new game to start
+#define END_GAME_WAIT 10000
 
 // utility
 #define ERRORS_ALLOWED 3
-#define DELAY_TIME_PRESS 30
+#define DELAY_BUTTON_PRESS 30
 
 // Game states
 #define MENU 0
@@ -52,9 +55,6 @@ uint8_t buttonPin[] = { B1_PIN, B2_PIN, B3_PIN, B4_PIN };
 
 // Green leds pin position
 uint8_t lnPin[] = { L1_PIN, L2_PIN, L3_PIN, L4_PIN };
-
-// Difficulty time reduction in ms
-int const timeReduction[] = {0, 200, 400, 800};
 
 volatile int currentState;
 unsigned long currentTimeSeqDisplay;
@@ -136,7 +136,7 @@ void button_on_press() {
     }
   }
   // delay implemented for avoiding the bouncing
-  delay(DELAY_TIME_PRESS);
+  delay(DELAY_BUTTON_PRESS);
 }
 
 void changeState(int newState) {
@@ -159,19 +159,6 @@ void reset() {
   changeState(MENU);
 }
 
-void decrease_times(){
-  currentTimeSeqDisplay -= DIFF_PROG_MODIFIER * get_difficulty();
-  currentTimeToInsert -= DIFF_PROG_MODIFIER * get_difficulty();
-
-  if(currentTimeToInsert <= MINIMUM_INSERT_TIME){
-    currentTimeToInsert = MINIMUM_INSERT_TIME;
-  }
-  if(currentTimeSeqDisplay <= MINIMUM_SEQ_TIME){
-    currentTimeSeqDisplay = MINIMUM_SEQ_TIME;
-  }
-  
-}
-
 void loop() {
   if (currentState == MENU) {
 
@@ -182,7 +169,7 @@ void loop() {
     systemTimeIdling = systemTimeIdling == 0 ? millis() : systemTimeIdling;
     potentiometer_handler(POT_PIN, &systemTimeIdling);
     led_fade(LS_PIN);
-    //after 10 sec the game goes in deep sleep
+    
     if (millis() - systemTimeIdling >= TIME_BEFORE_SLEEP) {
       changeState(SLEEP);
       systemTimeIdling = 0;
@@ -196,7 +183,7 @@ void loop() {
       Serial.println("GO !");
       sent = 1;
     }
-    unsigned long timeSeqDisplay = currentTimeSeqDisplay - time_Reduction[get_difficulty() - 1];
+    unsigned long timeSeqDisplay = (currentTimeSeqDisplay - DIFF_MODIFIER*get_difficulty()) < 0 ? MINIMUM_SEQ_TIME : (currentTimeSeqDisplay - DIFF_MODIFIER*get_difficulty());
     delay(rng(START_WAIT_RANGE) + MINIMUM_WAIT_TIME);
     apply_led_status(lnStatus, lnPin, lnPattern);
     delay(timeSeqDisplay);
@@ -208,13 +195,14 @@ void loop() {
 
   } else if (currentState == INSERT) {
 
-    unsigned long timeToInsert = currentTimeToInsert - time_Reduction[get_difficulty() - 1];
+    unsigned long timeToInsert = (currentTimeToInsert - DIFF_MODIFIER*get_difficulty()) < 0 ? MINIMUM_INSERT_TIME : (currentTimeToInsert - DIFF_MODIFIER*get_difficulty());
     apply_led_status(lnStatus, lnPin, lnPressed);
     if (millis() - systemTimeAfterDisplay >= timeToInsert) {
       if (check_score(lnPattern, lnPressed)) {
         score++;
         Serial.println("New point! Score: " + String(score));
-        decrease_times();
+        currentTimeSeqDisplay -= DIFF_PROG_MODIFIER * get_difficulty();
+        currentTimeToInsert -= DIFF_PROG_MODIFIER * get_difficulty();
         reset_led_status(lnStatus, lnPin);
         reset_pattern(lnPattern, lnPressed);
         changeState(DISPLAY);
@@ -223,7 +211,6 @@ void loop() {
         Serial.println("Too Slow!");
         changeState(PENALITY);
       }
-      //Serial.println(" insrt time " + String(currentTimeToInsert) + " seq time " + String(currentTimeSeqDisplay));
     }
 
   } else if (currentState == PENALITY) {
@@ -238,14 +225,14 @@ void loop() {
     //when too many errors have been commited the game ends
     errors++;
     if (errors >= ERRORS_ALLOWED) {
-      end_game(score);
+      Serial.println("Game Over. Final score: " + String(score));
+      delay(END_GAME_WAIT);
       reset();
     } else {
       changeState(DISPLAY);
     }
 
   } else if (currentState == SLEEP) {
-
     sleep();
     changeState(MENU);
   }

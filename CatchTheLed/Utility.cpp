@@ -14,17 +14,6 @@ int rng(int max_range){
   return rand() % max_range;
 }
 
-void end_game(int score){
-  while(1){
-    timerCount = timerCount == 0 ? millis() : timerCount;
-    if(millis() - timerCount <= TIME_BEFORE_END){
-      Serial.println("Game Over. Final score: " + String(score));
-    }else{
-      return;
-    }
-  }
-}
-
 void sleep(){
   Serial.println("Going to sleep... PRESS ANY BUTTON TO WAKE ME UP");
   delay(100);
