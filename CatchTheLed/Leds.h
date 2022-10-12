@@ -1,16 +1,15 @@
 #include <stdlib.h>
 #include <Arduino.h>
 
-
 /*
   makes the specified pin fade
 */
-void pin_fade(int pin);
+void pin_fade(uint8_t pin);
 
 /*
-  Sets the seed for rng numbers
+turns on/off specified led
 */
-void setup_rng();
+void led_write(uint8_t pin, uint8_t state);
 
 void set_led(int* lnStatus, int* lnPin, int led_index, int status);
 
@@ -18,6 +17,10 @@ void set_led(int* lnStatus, int* lnPin, int led_index, int status);
   Resets the given pattern
 */
 void reset_pattern(int* led_pattern, int* led_pressed);
+
+void reset_led_status(int* lnStatus, uint8_t* lnPin);
+
+void apply_led_status(int* lnStatus, uint8_t* lnPin, int* lnPattern);
 
 /*
   Generates a random led pattern

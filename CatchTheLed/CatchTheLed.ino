@@ -27,7 +27,7 @@
 // Time constants in ms
 #define TIME_BEFORE_SLEEP 10000
 
-#define START_WAIT 2000
+#define START_WAIT_RANGE 2000
 #define TIME_SEQ_DISPLAY 4000
 #define TIME_TO_INSERT 10000
 
@@ -47,12 +47,11 @@
 #define SLEEP 4
 
 // Buttons pin position
-int buttonPin[] = {B1_PIN, B2_PIN, B3_PIN, B4_PIN};
+uint8_t buttonPin[] = {B1_PIN, B2_PIN, B3_PIN, B4_PIN};
 
 // Green leds pin position
-int lnPin[] = {L1_PIN, L2_PIN, L3_PIN, L4_PIN};
+uint8_t lnPin[] = {L1_PIN, L2_PIN, L3_PIN, L4_PIN};
 
-// Current game state
 volatile int currentState;
 unsigned long currentTimeSeqDisplay;
 unsigned long currentTimeToInsert;
@@ -62,8 +61,9 @@ unsigned long systemTimeIdling;
 // Boolean for checking leds status
 int* lnStatus;
 // Memorize pattern
-int* lnPattern;
-int* lnPressed;
+volatile int* lnPattern;
+volatile int* lnPressed;
+volatile int pressed;
 
 int errors;
 int score;
@@ -83,7 +83,7 @@ void setup() {
     lnPressed[i] = 0;
     pinMode(lnPin[i], OUTPUT);
     pinMode(buttonPin[i], INPUT);
-    enableInterrupt(buttonPin[i], button_on_press, CHANGE);
+    enableInterrupt(buttonPin[i], button_on_press, RISING);
   }
 
   currentState = MENU;
@@ -96,36 +96,33 @@ void setup() {
   errors = 0;
   score = 0;
 
+  pressed = 0;
   generate_pattern(lnPattern);
 }
 
 void button_on_press(){
 
-  int indexInterrupted = -1;
   int interruptedPin = arduinoInterruptedPin;
-  for(int i = 0; i < 4; i++ ){
-    if(buttonPin[i] == interruptedPin){
-      indexInterrupted = i;
-      break;
-    }
-  }
+  int indexInterrupted = find_position((int*)buttonPin, 4, interruptedPin);
 
   if(currentState == MENU && interruptedPin == B1_PIN){
     currentState = DISPLAY;
   } else if(currentState == DISPLAY) {
     Serial.println("You pressed a button too early!");
     currentState = PENALITY;
-  } else if(currentState == INSERT) {
+  } else if(currentState == INSERT) { 
+    /********in insert quando premi il bottone si deve accendere anche il led corrispondente**************/
     if (lnPattern[indexInterrupted] == 0){
       Serial.println("This led was not lighten up!");
       currentState = PENALITY;
     } else {
       lnPressed[indexInterrupted] = 1;
+      pressed = 1;
     }
   }
 
   // delay implemented for avoiding the bouncing
-  delay(DELAY_TIME_PRESS)
+  delay(DELAY_TIME_PRESS);
 }
 
 void changeState(int newState){
@@ -153,31 +150,26 @@ void loop() {
     say_welcome();
     potentiometer_handler(POT_PIN);
     pin_fade(LS_PIN);
-      /* TODO
-      timer che va in background quando passano 10 secondi manda a nanna.
-       reset timer dopo nanna  e dopo chg game mode reset
-      */
     if(millis() - systemTimeIdling >= TIME_BEFORE_SLEEP){
       changeState(SLEEP);
       systemTimeIdling = 0;
       reset_salute();
+      led_write(LS_PIN, LOW);
     }
   }
   else if(currentState == DISPLAY){
-    int timeSeqDisplay = currentTimeSeqDisplay-DIFF_MODIFIER*get_difficulty();
-    delay(START_WAIT);
-    for(int i=0; i<4; i++){
-      set_led(lnStatus, lnPin, i, lnPattern[i]);
-    }
+    int timeSeqDisplay = currentTimeSeqDisplay - DIFF_MODIFIER * get_difficulty();
+    delay(rng(START_WAIT_RANGE));
+    apply_led_status(lnStatus, lnPin, lnPattern);
     delay(timeSeqDisplay);
-    for(int i=0; i<4; i++){
-      set_led(lnStatus, lnPin, i, 0);
-    }
+    reset_led_status(lnStatus, lnPin);
     changeState(INSERT);
     systemTimeAfterDisplay = millis();
   }
   else if(currentState == INSERT){
     int timeToInsert = currentTimeToInsert-DIFF_MODIFIER*get_difficulty();
+
+    apply_led_status(lnStatus, lnPin, lnPressed);
 
     if(millis() - systemTimeAfterDisplay >= timeToInsert){
       changeState(PENALITY);
@@ -191,13 +183,16 @@ void loop() {
     }
   }
   else if(currentState == PENALITY){
-      digitalWrite(LS_PIN, HIGH);
+      reset_led_status(lnStatus, lnPin);
+
+      led_write(LS_PIN, HIGH);
       Serial.println("Penality!");
       delay(1000);
-      digitalWrite(LS_PIN, LOW);
+      led_write(LS_PIN, LOW);
 
       errors++;
       if(errors >= ERRORS_ALLOWED){
+        /** VA SPAMMATO PER 10 SEC NON INVIATO E POI ASPETTA 10 SEC**/
         Serial.println("Game Over. Final score: " + String(score));
         delay(10000);
         reset();

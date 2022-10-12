@@ -1,6 +1,6 @@
 #include "Buttons.h"
 #include <Arduino.h>
-
+/*
 int get_interrupt_pin(int* button_pin, int* index){
   for(int i = 0; i < 4 ; i++){
     if(digitalRead(button_pin[i]) == HIGH){
@@ -9,4 +9,4 @@ int get_interrupt_pin(int* button_pin, int* index){
     }
   }
   return -1;
-}
+}*/

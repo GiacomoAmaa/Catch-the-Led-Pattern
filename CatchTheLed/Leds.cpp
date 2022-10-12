@@ -1,6 +1,6 @@
 #include "Leds.h"
+#include "Utility.h"
 #include <Arduino.h>
-#include <time.h>
 
 // Led brightness intensity
 int currIntensity = 0;
@@ -16,13 +16,13 @@ void fade(){
   }
 }
 
-void pin_fade(int pin){
+void pin_fade(uint8_t pin){
   analogWrite(pin, currIntensity);
   fade();
   delay(20);
 }
 
-void set_led(int* lnStatus, int* lnPin, int led_index, int status){
+void set_led(int* lnStatus, uint8_t* lnPin, int led_index, int status){
   if(status < 0 || status > 1){
     Serial.println("Error: invalid led status.");
     return;
@@ -30,7 +30,7 @@ void set_led(int* lnStatus, int* lnPin, int led_index, int status){
 
   if(lnStatus[led_index] != status){
     lnStatus[led_index] = status;
-    digitalWrite(lnPin[led_index], status ? HIGH : LOW);
+    led_write(lnPin[led_index], status ? HIGH : LOW);
   }
 }
 
@@ -41,9 +41,25 @@ void reset_pattern(int* led_pattern, int* led_pressed){
   generate_pattern(led_pattern);
 }
 
+void reset_led_status(int* lnStatus, uint8_t* lnPin){
+  noInterrupts();
+  for(int i = 0; i < 4; i++){
+    set_led(lnStatus, lnPin, i, 0);
+  }
+  interrupts();
+}
+
+void apply_led_status(int* lnStatus, uint8_t* lnPin, int* lnPattern){
+  noInterrupts();
+  for(int i=0; i<4; i++){
+    set_led(lnStatus, lnPin, i, lnPattern[i]);
+  }
+  interrupts();
+}
+
 void generate_pattern(int* led_pattern){
   for(int i=0; i<4; i++){
-    led_pattern[i] = rand() % 2;
+    led_pattern[i] = rng(2);
   }
 }
 
@@ -56,3 +72,6 @@ int check_score(int* pattern, int* pressed){
   return 1;
 }
 
+void led_write(uint8_t pin, uint8_t state){
+  digitalWrite(pin, state);
+}
