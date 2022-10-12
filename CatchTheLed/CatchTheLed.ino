@@ -105,8 +105,8 @@ void button_on_press(){
   int indexInterrupted = find_position((int*)buttonPin, 4, interruptedPin);
 
   if(currentState == MENU && interruptedPin == B1_PIN){
-    changeState(DISPLAY);
     sent = 0;
+    currentState = DISPLAY;
   } else if(currentState == DISPLAY) {
     Serial.println("You pressed a button too early!");
     currentState = PENALITY;
