@@ -8,7 +8,6 @@
 
 // Potentiometer
 #define POT_PIN A0
-
 // Red led pins
 #define LS_PIN 11
 // Green led pins
@@ -16,7 +15,6 @@
 #define L2_PIN 12
 #define L3_PIN 10
 #define L4_PIN 9
-
 // Button pins
 #define B1_PIN 5
 #define B2_PIN 4
@@ -25,19 +23,22 @@
 
 // Time constants in ms
 #define TIME_BEFORE_SLEEP 10000
-
+// time between sequences
 #define START_WAIT_RANGE 2000
-#define TIME_SEQ_DISPLAY 4000
-#define TIME_TO_INSERT 7000
-
-#define DIFF_MODIFIER 250
-#define DIFF_PROG_MODIFIER 50
-#define DIFF_PROGRESS 150
-
-#define ERRORS_ALLOWED 3
-
-#define DELAY_TIME_PRESS 30
 #define MINIMUM_WAIT_TIME 300
+// combination show time
+#define TIME_SEQ_DISPLAY 4000
+#define MINIMUM_SEQ_TIME 200
+// time to insert the sequence
+#define TIME_TO_INSERT 7000
+#define MINIMUM_INSERT_TIME 1500
+// modifiers in ms
+#define DIFF_MODIFIER 200
+#define DIFF_PROG_MODIFIER 50
+
+// utility
+#define ERRORS_ALLOWED 3
+#define DELAY_TIME_PRESS 30
 
 // Game states
 #define MENU 0
@@ -47,10 +48,13 @@
 #define SLEEP 4
 
 // Buttons pin position
-uint8_t buttonPin[] = {B1_PIN, B2_PIN, B3_PIN, B4_PIN};
+uint8_t buttonPin[] = { B1_PIN, B2_PIN, B3_PIN, B4_PIN };
 
 // Green leds pin position
-uint8_t lnPin[] = {L1_PIN, L2_PIN, L3_PIN, L4_PIN};
+uint8_t lnPin[] = { L1_PIN, L2_PIN, L3_PIN, L4_PIN };
+
+// Difficulty time reduction in ms
+int const timeReduction[] = {0, 200, 400, 800};
 
 volatile int currentState;
 unsigned long currentTimeSeqDisplay;
@@ -74,10 +78,10 @@ void setup() {
 
   setup_rng();
 
-  lnStatus = (int*)malloc(sizeof(int)*4);
-  lnPattern = (int*)malloc(sizeof(int)*4);
-  lnPressed = (int*)malloc(sizeof(int)*4);
-  for(int i=0; i<4; i++){
+  lnStatus = (int*)malloc(sizeof(int) * 4);
+  lnPattern = (int*)malloc(sizeof(int) * 4);
+  lnPressed = (int*)malloc(sizeof(int) * 4);
+  for (int i = 0; i < 4; i++) {
     lnStatus[i] = 0;
     lnPattern[i] = -1;
     lnPressed[i] = 0;
@@ -100,51 +104,50 @@ void setup() {
   generate_pattern(lnPattern);
 }
 
-void button_on_press(){
+void button_on_press() {
 
   int interruptedPin = arduinoInterruptedPin;
   int indexInterrupted = -1;
-  for(int i = 0; i < 4; i++ ){
-    if(buttonPin[i] == interruptedPin){
+  for (int i = 0; i < 4; i++) {
+    if (buttonPin[i] == interruptedPin) {
       indexInterrupted = i;
       break;
     }
   }
-  if(indexInterrupted < 0){
+  if (indexInterrupted < 0) {
     Serial.println("Error: cant find interrupted pin index.");
     return;
   }
 
 
-  if(currentState == MENU && interruptedPin == B1_PIN){
+  if (currentState == MENU && interruptedPin == B1_PIN) {
     sent = 0;
     digitalWrite(LS_PIN, LOW);
     currentState = DISPLAY;
-  } else if(currentState == DISPLAY) {
+  } else if (currentState == DISPLAY) {
     Serial.println("You pressed a button too early!");
     currentState = PENALITY;
-  } else if(currentState == INSERT) { 
-    if (lnPattern[indexInterrupted] == 0){
+  } else if (currentState == INSERT) {
+    if (lnPattern[indexInterrupted] == 0) {
       Serial.println("This led was not lighten up!");
       currentState = PENALITY;
     } else {
       lnPressed[indexInterrupted] = 1;
     }
   }
-
   // delay implemented for avoiding the bouncing
   delay(DELAY_TIME_PRESS);
 }
 
-void changeState(int newState){
-  if(newState >= 0 && newState <= 4){
+void changeState(int newState) {
+  if (newState >= 0 && newState <= 4) {
     noInterrupts();
     currentState = newState;
     interrupts();
   }
 }
 
-void reset(){
+void reset() {
   reset_pattern(lnPattern, lnPressed);
   errors = 0;
   score = 0;
@@ -156,51 +159,62 @@ void reset(){
   changeState(MENU);
 }
 
+void decrease_times(){
+  currentTimeSeqDisplay -= DIFF_PROG_MODIFIER * get_difficulty();
+  currentTimeToInsert -= DIFF_PROG_MODIFIER * get_difficulty();
+
+  if(currentTimeToInsert <= MINIMUM_INSERT_TIME){
+    currentTimeToInsert = MINIMUM_INSERT_TIME;
+  }
+  if(currentTimeSeqDisplay <= MINIMUM_SEQ_TIME){
+    currentTimeSeqDisplay = MINIMUM_SEQ_TIME;
+  }
+  
+}
+
 void loop() {
-  if(currentState == MENU){
-    if(!sent){
+  if (currentState == MENU) {
+
+    if (!sent) {
       Serial.println("Welcome to the Catch the Led Pattern Game. Press Key T1 to Start");
       sent = 1;
     }
-
     systemTimeIdling = systemTimeIdling == 0 ? millis() : systemTimeIdling;
     potentiometer_handler(POT_PIN, &systemTimeIdling);
     led_fade(LS_PIN);
     //after 10 sec the game goes in deep sleep
-    if(millis() - systemTimeIdling >= TIME_BEFORE_SLEEP){
+    if (millis() - systemTimeIdling >= TIME_BEFORE_SLEEP) {
       changeState(SLEEP);
       systemTimeIdling = 0;
       sent = 0;
       digitalWrite(LS_PIN, LOW);
     }
-  }
-  else if(currentState == DISPLAY){
-    if(!sent){
+
+  } else if (currentState == DISPLAY) {
+
+    if (!sent) {
       Serial.println("GO !");
       sent = 1;
     }
-
-    unsigned long timeSeqDisplay = currentTimeSeqDisplay - DIFF_MODIFIER * get_difficulty();
+    unsigned long timeSeqDisplay = currentTimeSeqDisplay - time_Reduction[get_difficulty() - 1];
     delay(rng(START_WAIT_RANGE) + MINIMUM_WAIT_TIME);
     apply_led_status(lnStatus, lnPin, lnPattern);
     delay(timeSeqDisplay);
     reset_led_status(lnStatus, lnPin);
-    if(currentState == DISPLAY){
+    if (currentState == DISPLAY) {
       changeState(INSERT);
     }
     systemTimeAfterDisplay = millis();
-  }
-  else if(currentState == INSERT){
-    unsigned long timeToInsert = currentTimeToInsert - DIFF_MODIFIER * get_difficulty();
 
+  } else if (currentState == INSERT) {
+
+    unsigned long timeToInsert = currentTimeToInsert - time_Reduction[get_difficulty() - 1];
     apply_led_status(lnStatus, lnPin, lnPressed);
-
-    if(millis() - systemTimeAfterDisplay >= timeToInsert){
-      if(check_score(lnPattern, lnPressed)){
+    if (millis() - systemTimeAfterDisplay >= timeToInsert) {
+      if (check_score(lnPattern, lnPressed)) {
         score++;
         Serial.println("New point! Score: " + String(score));
-        currentTimeToInsert -= DIFF_PROGRESS + DIFF_PROG_MODIFIER * get_difficulty();
-        currentTimeSeqDisplay -= DIFF_PROGRESS + DIFF_PROG_MODIFIER * get_difficulty();
+        decrease_times();
         reset_led_status(lnStatus, lnPin);
         reset_pattern(lnPattern, lnPressed);
         changeState(DISPLAY);
@@ -209,10 +223,11 @@ void loop() {
         Serial.println("Too Slow!");
         changeState(PENALITY);
       }
-       Serial.println(" insrt time " + String(currentTimeToInsert) +" seq time "+ String(currentTimeSeqDisplay));
+      //Serial.println(" insrt time " + String(currentTimeToInsert) + " seq time " + String(currentTimeSeqDisplay));
     }
-  }
-  else if(currentState == PENALITY){
+
+  } else if (currentState == PENALITY) {
+
     //switch off green leds
     reset_led_status(lnStatus, lnPin);
     //switch on red button for 1 sec
@@ -222,14 +237,15 @@ void loop() {
     digitalWrite(LS_PIN, LOW);
     //when too many errors have been commited the game ends
     errors++;
-    if(errors >= ERRORS_ALLOWED){
+    if (errors >= ERRORS_ALLOWED) {
       end_game(score);
       reset();
     } else {
       changeState(DISPLAY);
     }
-  }
-  else if(currentState == SLEEP){
+
+  } else if (currentState == SLEEP) {
+
     sleep();
     changeState(MENU);
   }
