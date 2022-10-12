@@ -26,4 +26,4 @@ void sleep();
 
 int array_contains(int* array, int value);
 
-int find_position(int* array, int length, int value);
+//int find_position(int* array, int length, int value);

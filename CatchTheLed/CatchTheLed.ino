@@ -102,7 +102,18 @@ void setup() {
 void button_on_press(){
 
   int interruptedPin = arduinoInterruptedPin;
-  int indexInterrupted = find_position((int*)buttonPin, 4, interruptedPin);
+  int indexInterrupted = -1;
+  for(int i = 0; i < length; i++ ){
+    if(buttonPin[i] == interruptedPin){
+      indexInterrupted = i;
+      break;
+    }
+  }
+  if(indexInterrupted < 0){
+    Serial.println("Error: cant find interrupted pin index.");
+    return;
+  }
+
 
   if(currentState == MENU && interruptedPin == B1_PIN){
     sent = 0;
