@@ -1,11 +1,11 @@
+#define EI_ARDUINO_INTERRUPTED_PIN
+
 #include <avr/sleep.h>
 #include "Potentiometer.h"
 #include "Leds.h"
 #include "Buttons.h"
 #include "Utility.h"
-#define EI_ARDUINO_INTERRUPTED_PIN
 #include <EnableInterrupt.h>
-
 
 // Potentiometer
 #define POT_PIN A0
@@ -37,6 +37,8 @@
 
 #define ERRORS_ALLOWED 3
 
+#define DELAY_TIME_PRESS 30
+
 // Game states
 #define MENU 0
 #define DISPLAY 1
@@ -51,11 +53,11 @@ int buttonPin[] = {B1_PIN, B2_PIN, B3_PIN, B4_PIN};
 int lnPin[] = {L1_PIN, L2_PIN, L3_PIN, L4_PIN};
 
 // Current game state
-int currentState;
-int currentTimeSeqDisplay;
-int currentTimeToInsert;
-int systemTimeAfterDisplay;
-int systemTimeIdling;
+volatile int currentState;
+unsigned long currentTimeSeqDisplay;
+unsigned long currentTimeToInsert;
+unsigned long systemTimeAfterDisplay;
+unsigned long systemTimeIdling;
 
 // Boolean for checking leds status
 int* lnStatus;
@@ -98,7 +100,7 @@ void setup() {
 }
 
 void button_on_press(){
-  //OOOK
+
   int indexInterrupted = -1;
   int interruptedPin = arduinoInterruptedPin;
   for(int i = 0; i < 4; i++ ){
@@ -107,13 +109,7 @@ void button_on_press(){
       break;
     }
   }
-  /*
-  Serial.println("pressed button "+ String(indexInterrupted) + "with pin" + String(interruptedPin));
-  delay(200);
-  */
 
-  /**FIXARE BOUNCING**/
-  //NON VA UN CAZZO
   if(currentState == MENU && interruptedPin == B1_PIN){
     currentState = DISPLAY;
   } else if(currentState == DISPLAY) {
@@ -127,6 +123,9 @@ void button_on_press(){
       lnPressed[indexInterrupted] = 1;
     }
   }
+
+  // delay implemented for avoiding the bouncing
+  delay(DELAY_TIME_PRESS)
 }
 
 void changeState(int newState){
