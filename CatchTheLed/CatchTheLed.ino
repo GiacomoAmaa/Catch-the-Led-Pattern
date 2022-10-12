@@ -63,7 +63,6 @@ int* lnStatus;
 // Memorize pattern
 volatile int* lnPattern;
 volatile int* lnPressed;
-volatile int pressed;
 
 int errors;
 int score;
@@ -97,7 +96,6 @@ void setup() {
   errors = 0;
   score = 0;
 
-  pressed = 0;
   generate_pattern(lnPattern);
 }
 
@@ -119,7 +117,6 @@ void button_on_press(){
       currentState = PENALITY;
     } else {
       lnPressed[indexInterrupted] = 1;
-      pressed = 1;
     }
   }
 
