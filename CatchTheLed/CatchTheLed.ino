@@ -3,7 +3,6 @@
 #include <avr/sleep.h>
 #include "Potentiometer.h"
 #include "Leds.h"
-#include "Buttons.h"
 #include "Utility.h"
 #include <EnableInterrupt.h>
 
@@ -29,7 +28,7 @@
 
 #define START_WAIT_RANGE 2000
 #define TIME_SEQ_DISPLAY 4000
-#define TIME_TO_INSERT 10000
+#define TIME_TO_INSERT 7000
 
 #define DIFF_MODIFIER 250
 #define DIFF_PROG_MODIFIER 50
@@ -95,6 +94,7 @@ void setup() {
 
   errors = 0;
   score = 0;
+  sent = 0;
 
   generate_pattern(lnPattern);
 }
@@ -111,7 +111,6 @@ void button_on_press(){
     Serial.println("You pressed a button too early!");
     currentState = PENALITY;
   } else if(currentState == INSERT) { 
-    /********in insert quando premi il bottone si deve accendere anche il led corrispondente**************/
     if (lnPattern[indexInterrupted] == 0){
       Serial.println("This led was not lighten up!");
       currentState = PENALITY;
@@ -153,13 +152,13 @@ void loop() {
 
     systemTimeIdling = systemTimeIdling == 0 ? millis() : systemTimeIdling;
     potentiometer_handler(POT_PIN);
-    pin_fade(LS_PIN);
-
+    led_fade(LS_PIN);
+    //after 10 sec the game goes in deep sleep
     if(millis() - systemTimeIdling >= TIME_BEFORE_SLEEP){
       changeState(SLEEP);
       systemTimeIdling = 0;
       sent = 0;
-      led_write(LS_PIN, LOW);
+      digitalWrite(LS_PIN, LOW);
     }
   }
   else if(currentState == DISPLAY){
@@ -167,6 +166,7 @@ void loop() {
       Serial.println("GO !");
       sent = 1;
     }
+
     int timeSeqDisplay = currentTimeSeqDisplay - DIFF_MODIFIER * get_difficulty();
     delay(rng(START_WAIT_RANGE));
     apply_led_status(lnStatus, lnPin, lnPattern);
@@ -176,36 +176,38 @@ void loop() {
     systemTimeAfterDisplay = millis();
   }
   else if(currentState == INSERT){
-    int timeToInsert = currentTimeToInsert-DIFF_MODIFIER*get_difficulty();
+    unsigned long timeToInsert = currentTimeToInsert - DIFF_MODIFIER * get_difficulty();
 
     apply_led_status(lnStatus, lnPin, lnPressed);
 
     if(millis() - systemTimeAfterDisplay >= timeToInsert){
+      reset_pattern(lnPattern, lnPressed);
       changeState(PENALITY);
-    } else if(check_score(lnPattern, lnPressed) == 1){
+    } else if(check_score(lnPattern, lnPressed)){
       score++;
       Serial.println("New point! Score: " + String(score));
-      currentTimeToInsert -= DIFF_PROGRESS + DIFF_PROG_MODIFIER*get_difficulty();
-      currentTimeSeqDisplay -= DIFF_PROGRESS + DIFF_PROG_MODIFIER*get_difficulty();
+      currentTimeToInsert -= DIFF_PROGRESS + DIFF_PROG_MODIFIER * get_difficulty();
+      currentTimeSeqDisplay -= DIFF_PROGRESS + DIFF_PROG_MODIFIER * get_difficulty();
       reset_pattern(lnPattern, lnPressed);
       changeState(DISPLAY);
     }
   }
   else if(currentState == PENALITY){
-      reset_led_status(lnStatus, lnPin);
-
-      led_write(LS_PIN, HIGH);
-      Serial.println("Penality!");
-      delay(1000);
-      led_write(LS_PIN, LOW);
-
-      errors++;
-      if(errors >= ERRORS_ALLOWED){
-        end_game(score);
-        reset();
-      } else {
-        changeState(DISPLAY);
-      }
+    //switch off green leds
+    reset_led_status(lnStatus, lnPin);
+    //switch on red button for 1 sec
+    digitalWrite(LS_PIN, HIGH);
+    Serial.println("Penality!");
+    delay(1000);
+    digitalWrite(LS_PIN, LOW);
+    //when too many errors have been commited the game ends
+    errors++;
+    if(errors >= ERRORS_ALLOWED){
+      end_game(score);
+      reset();
+    } else {
+      changeState(DISPLAY);
+    }
   }
   else if(currentState == SLEEP){
     sleep();
