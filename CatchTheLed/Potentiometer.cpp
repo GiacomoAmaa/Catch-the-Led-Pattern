@@ -22,10 +22,6 @@ int set_difficulty(int newVal){
   return i;
 }
 
-int get_difficulty(){
-  return diff;
-}
-
 void potentiometer_handler(int potPin){
   int potNewValue = analogRead(potPin);
 
@@ -37,4 +33,8 @@ void potentiometer_handler(int potPin){
       diff=newDiff;
     }
   }
+}
+
+int get_difficulty(){
+  return diff;
 }

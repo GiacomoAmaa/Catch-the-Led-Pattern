@@ -16,7 +16,7 @@ void fade(){
   }
 }
 
-void pin_fade(uint8_t pin){
+void led_fade(uint8_t pin){
   analogWrite(pin, currIntensity);
   fade();
   delay(20);
@@ -30,7 +30,13 @@ void set_led(int* lnStatus, uint8_t* lnPin, int led_index, int status){
 
   if(lnStatus[led_index] != status){
     lnStatus[led_index] = status;
-    led_write(lnPin[led_index], status ? HIGH : LOW);
+    digitalWrite(lnPin[led_index], status ? HIGH : LOW);
+  }
+}
+
+void generate_pattern(int* led_pattern){
+  for(int i=0; i<4; i++){
+    led_pattern[i] = rng(2);
   }
 }
 
@@ -57,12 +63,6 @@ void apply_led_status(int* lnStatus, uint8_t* lnPin, int* lnPattern){
   interrupts();
 }
 
-void generate_pattern(int* led_pattern){
-  for(int i=0; i<4; i++){
-    led_pattern[i] = rng(2);
-  }
-}
-
 int check_score(int* pattern, int* pressed){
   for(int i=0; i<4; i++){
     if(pattern[i] != pressed[i]) {
@@ -70,8 +70,4 @@ int check_score(int* pattern, int* pressed){
     }
   }
   return 1;
-}
-
-void led_write(uint8_t pin, uint8_t state){
-  digitalWrite(pin, state);
 }
