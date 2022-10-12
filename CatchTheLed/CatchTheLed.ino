@@ -103,7 +103,7 @@ void button_on_press(){
 
   int interruptedPin = arduinoInterruptedPin;
   int indexInterrupted = -1;
-  for(int i = 0; i < length; i++ ){
+  for(int i = 0; i < 4; i++ ){
     if(buttonPin[i] == interruptedPin){
       indexInterrupted = i;
       break;
@@ -117,6 +117,7 @@ void button_on_press(){
 
   if(currentState == MENU && interruptedPin == B1_PIN){
     sent = 0;
+    digitalWrite(LS_PIN, LOW);
     currentState = DISPLAY;
   } else if(currentState == DISPLAY) {
     Serial.println("You pressed a button too early!");
@@ -193,6 +194,7 @@ void loop() {
 
     if(millis() - systemTimeAfterDisplay >= timeToInsert){
       reset_pattern(lnPattern, lnPressed);
+      Serial.println("Too Slow!");
       changeState(PENALITY);
     } else if(check_score(lnPattern, lnPressed)){
       score++;
