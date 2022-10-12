@@ -13,6 +13,11 @@ Allows to salute again
 void reset_salute();
 
 /*
+Sends endgame message
+*/
+void end_game(int score);
+
+/*
 Sets the seed for rng numbers
 */
 void setup_rng();
