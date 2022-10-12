@@ -178,7 +178,7 @@ void loop() {
       sent = 1;
     }
 
-    int timeSeqDisplay = currentTimeSeqDisplay - DIFF_MODIFIER * get_difficulty();
+    unsigned long timeSeqDisplay = currentTimeSeqDisplay - DIFF_MODIFIER * get_difficulty();
     delay(rng(START_WAIT_RANGE));
     apply_led_status(lnStatus, lnPin, lnPattern);
     delay(timeSeqDisplay);
