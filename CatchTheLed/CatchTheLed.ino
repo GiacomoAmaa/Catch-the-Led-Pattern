@@ -67,6 +67,7 @@ volatile int pressed;
 
 int errors;
 int score;
+int sent;
 
 void setup() {
   Serial.begin(9600);
@@ -106,7 +107,8 @@ void button_on_press(){
   int indexInterrupted = find_position((int*)buttonPin, 4, interruptedPin);
 
   if(currentState == MENU && interruptedPin == B1_PIN){
-    currentState = DISPLAY;
+    changeState(DISPLAY);
+    sent = 0;
   } else if(currentState == DISPLAY) {
     Serial.println("You pressed a button too early!");
     currentState = PENALITY;
@@ -137,6 +139,7 @@ void reset(){
   reset_pattern(lnPattern, lnPressed);
   errors = 0;
   score = 0;
+  sent = 0;
   currentTimeSeqDisplay = TIME_SEQ_DISPLAY;
   currentTimeToInsert = TIME_TO_INSERT;
   systemTimeAfterDisplay = 0;
@@ -146,18 +149,27 @@ void reset(){
 
 void loop() {
   if(currentState == MENU){
+    if(!sent){
+      Serial.println("Welcome to the Catch the Led Pattern Game. Press Key T1 to Start");
+      sent = 1;
+    }
+
     systemTimeIdling = systemTimeIdling == 0 ? millis() : systemTimeIdling;
-    say_welcome();
     potentiometer_handler(POT_PIN);
     pin_fade(LS_PIN);
+
     if(millis() - systemTimeIdling >= TIME_BEFORE_SLEEP){
       changeState(SLEEP);
       systemTimeIdling = 0;
-      reset_salute();
+      sent = 0;
       led_write(LS_PIN, LOW);
     }
   }
   else if(currentState == DISPLAY){
+    if(!sent){
+      Serial.println("GO !");
+      sent = 1;
+    }
     int timeSeqDisplay = currentTimeSeqDisplay - DIFF_MODIFIER * get_difficulty();
     delay(rng(START_WAIT_RANGE));
     apply_led_status(lnStatus, lnPin, lnPattern);
@@ -192,9 +204,7 @@ void loop() {
 
       errors++;
       if(errors >= ERRORS_ALLOWED){
-        /** VA SPAMMATO PER 10 SEC NON INVIATO E POI ASPETTA 10 SEC**/
-        Serial.println("Game Over. Final score: " + String(score));
-        delay(10000);
+        end_game(score);
         reset();
       } else {
         changeState(DISPLAY);
@@ -204,6 +214,5 @@ void loop() {
     sleep();
     changeState(MENU);
   }
-  
 }
 

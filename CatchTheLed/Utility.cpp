@@ -2,8 +2,9 @@
 #include <time.h>
 #include <stdlib.h>
 
-// keeps track if a message has been sent or not
-int sent = 0;
+#define TIME_BEFORE_END 10000
+
+unsigned long timerCount = 0;
 
 void setup_rng(){
   srand(time(NULL));
@@ -11,17 +12,6 @@ void setup_rng(){
 
 int rng(int max_range){
   return rand() % max_range;
-}
-
-void say_welcome(){
-  if(!sent){
-    Serial.println("Welcome to the Catch the Led Pattern Game. Press Key T1 to Start");
-    sent++;
-  }
-}
-
-void reset_salute(){
-  sent = 0;
 }
 
 void sleep(){
@@ -53,4 +43,15 @@ int find_position(int* array, int length, int value){
   return p;
 }
 
+void end_game(int score){
+  while(1){
+    timerCount = timerCount == 0 ? millis() : timerCount;
+    if(millis() - timerCount <= TIME_BEFORE_END){
+      Serial.println("Game Over. Final score: " + String(score));
+    }else{
+      return;
+    }
+  }
+
+}
 

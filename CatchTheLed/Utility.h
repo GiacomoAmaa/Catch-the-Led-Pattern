@@ -10,14 +10,14 @@ void setup_rng();
 int rng(int max_range);
 
 /*
-Prints a welcome string on the serial line
+Sends endgame message
 */
-void say_welcome();
+void end_game(int score);
 
 /*
-Allows to salute again
+Sets the seed for rng numbers
 */
-void reset_salute();
+void setup_rng();
 
 /*
 Activates sleep mode 
