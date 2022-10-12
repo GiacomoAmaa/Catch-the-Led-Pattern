@@ -37,6 +37,7 @@
 #define ERRORS_ALLOWED 3
 
 #define DELAY_TIME_PRESS 30
+#define MINIMUM_WAIT_TIME 300
 
 // Game states
 #define MENU 0
@@ -163,7 +164,7 @@ void loop() {
     }
 
     systemTimeIdling = systemTimeIdling == 0 ? millis() : systemTimeIdling;
-    potentiometer_handler(POT_PIN);
+    potentiometer_handler(POT_PIN, &systemTimeIdling);
     led_fade(LS_PIN);
     //after 10 sec the game goes in deep sleep
     if(millis() - systemTimeIdling >= TIME_BEFORE_SLEEP){
@@ -180,11 +181,13 @@ void loop() {
     }
 
     int timeSeqDisplay = currentTimeSeqDisplay - DIFF_MODIFIER * get_difficulty();
-    delay(rng(START_WAIT_RANGE));
+    delay(rng(START_WAIT_RANGE) + MINIMUM_WAIT_TIME);
     apply_led_status(lnStatus, lnPin, lnPattern);
     delay(timeSeqDisplay);
     reset_led_status(lnStatus, lnPin);
-    changeState(INSERT);
+    if(currentState == DISPLAY){
+      changeState(INSERT);
+    }
     systemTimeAfterDisplay = millis();
   }
   else if(currentState == INSERT){
@@ -193,16 +196,20 @@ void loop() {
     apply_led_status(lnStatus, lnPin, lnPressed);
 
     if(millis() - systemTimeAfterDisplay >= timeToInsert){
-      reset_pattern(lnPattern, lnPressed);
-      Serial.println("Too Slow!");
-      changeState(PENALITY);
-    } else if(check_score(lnPattern, lnPressed)){
-      score++;
-      Serial.println("New point! Score: " + String(score));
-      currentTimeToInsert -= DIFF_PROGRESS + DIFF_PROG_MODIFIER * get_difficulty();
-      currentTimeSeqDisplay -= DIFF_PROGRESS + DIFF_PROG_MODIFIER * get_difficulty();
-      reset_pattern(lnPattern, lnPressed);
-      changeState(DISPLAY);
+      if(check_score(lnPattern, lnPressed)){
+        score++;
+        Serial.println("New point! Score: " + String(score));
+        currentTimeToInsert -= DIFF_PROGRESS + DIFF_PROG_MODIFIER * get_difficulty();
+        currentTimeSeqDisplay -= DIFF_PROGRESS + DIFF_PROG_MODIFIER * get_difficulty();
+        reset_led_status(lnStatus, lnPin);
+        reset_pattern(lnPattern, lnPressed);
+        changeState(DISPLAY);
+      } else {
+        reset_pattern(lnPattern, lnPressed);
+        Serial.println("Too Slow!");
+        changeState(PENALITY);
+      }
+       Serial.println(" insrt time " + String(currentTimeToInsert) +" seq time "+ String(currentTimeSeqDisplay));
     }
   }
   else if(currentState == PENALITY){

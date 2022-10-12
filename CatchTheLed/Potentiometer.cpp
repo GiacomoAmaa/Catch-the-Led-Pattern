@@ -22,7 +22,7 @@ int set_difficulty(int newVal){
   return i;
 }
 
-void potentiometer_handler(int potPin){
+void potentiometer_handler(int potPin, unsigned long* systemTimeIdling){
   int potNewValue = analogRead(potPin);
 
   if(potValue != potNewValue ){
@@ -31,6 +31,7 @@ void potentiometer_handler(int potPin){
     if(newDiff != diff){
       Serial.println("Difficulty : " + String(newDiff));
       diff=newDiff;
+      *systemTimeIdling = millis();
     }
   }
 }

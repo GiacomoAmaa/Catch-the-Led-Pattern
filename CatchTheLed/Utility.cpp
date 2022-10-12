@@ -42,17 +42,3 @@ int array_contains(int* array, int length, int value){
   }
   return 0;
 }
-
-/*
-int find_position(int* array, int length, int value){
-  int p = -1;
-  for(int i = 0; i < length; i++ ){
-    if(array[i] == value){
-      p = i;
-      break;
-    }
-  }
-  return p;
-}*/
-
-
