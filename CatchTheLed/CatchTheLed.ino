@@ -45,7 +45,7 @@
 
 // Game states
 #define MENU 0
-#define DISPLAY 1
+#define SEQUENCE 1
 #define INSERT 2
 #define PENALITY 3
 #define SLEEP 4
@@ -123,8 +123,8 @@ void button_on_press() {
   if (currentState == MENU && interruptedPin == B1_PIN) {
     sent = 0;
     digitalWrite(LS_PIN, LOW);
-    currentState = DISPLAY;
-  } else if (currentState == DISPLAY) {
+    currentState = SEQUENCE;
+  } else if (currentState == SEQUENCE) {
     Serial.println("You pressed a button too early!");
     currentState = PENALITY;
   } else if (currentState == INSERT) {
@@ -177,7 +177,7 @@ void loop() {
       digitalWrite(LS_PIN, LOW);
     }
 
-  } else if (currentState == DISPLAY) {
+  } else if (currentState == SEQUENCE) {
 
     if (!sent) {
       Serial.println("GO !");
@@ -188,7 +188,7 @@ void loop() {
     apply_led_status(lnStatus, lnPin, lnPattern);
     delay(timeSeqDisplay);
     reset_led_status(lnStatus, lnPin);
-    if (currentState == DISPLAY) {
+    if (currentState == SEQUENCE) {
       changeState(INSERT);
     }
     systemTimeAfterDisplay = millis();
@@ -208,7 +208,7 @@ void loop() {
         currentTimeToInsert -= DIFF_PROG_MODIFIER * get_difficulty();
         reset_led_status(lnStatus, lnPin);
         reset_pattern(lnPattern, lnPressed);
-        changeState(DISPLAY);
+        changeState(SEQUENCE);
       } else {
         reset_pattern(lnPattern, lnPressed);
         Serial.println("Too Slow!");
@@ -232,7 +232,7 @@ void loop() {
       delay(END_GAME_WAIT);
       reset();
     } else {
-      changeState(DISPLAY);
+      changeState(SEQUENCE);
     }
 
   } else if (currentState == SLEEP) {
