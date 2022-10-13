@@ -28,10 +28,10 @@
 #define MINIMUM_WAIT_TIME 300
 // combination show time
 #define TIME_SEQ_DISPLAY 4000
-#define MINIMUM_SEQ_TIME 200
+#define MINIMUM_SEQ_TIME 1000
 // time to insert the sequence
 #define TIME_TO_INSERT 7000
-#define MINIMUM_INSERT_TIME 1500
+#define MINIMUM_INSERT_TIME 2300
 // modifiers in ms
 #define DIFF_MODIFIER 200
 #define DIFF_PROG_MODIFIER 30
@@ -141,6 +141,18 @@ void button_on_press() {
   delay(DELAY_BUTTON_PRESS);
 }
 
+void decrease_time(){
+  currentTimeSeqDisplay -= DIFF_PROG_MODIFIER * get_difficulty();
+  currentTimeToInsert -= DIFF_PROG_MODIFIER * get_difficulty();
+
+  if( currentTimeSeqDisplay < MINIMUM_SEQ_TIME ){
+    currentTimeSeqDisplay = MINIMUM_SEQ_TIME ;
+  }
+  if( currentTimeToInsert < MINIMUM_INSERT_TIME ){
+    currentTimeToInsert = MINIMUM_INSERT_TIME ;
+  }
+}
+
 void changeState(int newState) {
   if (newState >= 0 && newState <= 4) {
     noInterrupts();
@@ -185,7 +197,7 @@ void loop() {
       Serial.println("GO !");
       sent = 1;
     }
-    unsigned long timeSeqDisplay = (currentTimeSeqDisplay - timeReduction[get_difficulty() - 1]) < MINIMUM_SEQ_TIME ? MINIMUM_SEQ_TIME : (currentTimeSeqDisplay - timeReduction[get_difficulty() - 1]);
+    unsigned long timeSeqDisplay = currentTimeSeqDisplay - timeReduction[get_difficulty() - 1];
     delay(rng(START_WAIT_RANGE) + MINIMUM_WAIT_TIME);
     apply_led_status(lnStatus, lnPin, lnPattern);
     delay(timeSeqDisplay);
@@ -197,14 +209,13 @@ void loop() {
 
   } else if (currentState == INSERT) {
 
-    unsigned long timeToInsert = (currentTimeToInsert - timeReduction[get_difficulty() - 1]) < MINIMUM_INSERT_TIME ? MINIMUM_INSERT_TIME : (currentTimeToInsert - timeReduction[get_difficulty() - 1 ]);
+    unsigned long timeToInsert = currentTimeToInsert - timeReduction[get_difficulty() - 1];
     apply_led_status(lnStatus, lnPin, lnPressed);
     if (millis() - systemTimeAfterDisplay >= timeToInsert) {
       if (check_score(lnPattern, lnPressed)) {
         score++;
         Serial.println("New point! Score: " + String(score));
-        currentTimeSeqDisplay = (currentTimeSeqDisplay - DIFF_PROG_MODIFIER * get_difficulty()) < MINIMUM_SEQ_TIME ? MINIMUM_SEQ_TIME : (currentTimeSeqDisplay - DIFF_PROG_MODIFIER * get_difficulty());
-        currentTimeToInsert = (currentTimeToInsert - DIFF_PROG_MODIFIER * get_difficulty()) < MINIMUM_INSERT_TIME ? MINIMUM_INSERT_TIME : (currentTimeToInsert - DIFF_PROG_MODIFIER * get_difficulty());
+        decrease_time();
         reset_led_status(lnStatus, lnPin);
         reset_pattern(lnPattern, lnPressed);
         changeState(SEQUENCE);
