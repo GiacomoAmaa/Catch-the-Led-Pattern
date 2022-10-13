@@ -202,6 +202,9 @@ void loop() {
         score++;
         Serial.println("New point! Score: " + String(score));
         currentTimeSeqDisplay -= DIFF_PROG_MODIFIER * get_difficulty();
+        
+
+        
         currentTimeToInsert -= DIFF_PROG_MODIFIER * get_difficulty();
         reset_led_status(lnStatus, lnPin);
         reset_pattern(lnPattern, lnPressed);

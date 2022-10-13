@@ -34,13 +34,13 @@ void set_led(int* lnStatus, uint8_t* lnPin, int led_index, int status){
   }
 }
 
-void generate_pattern(int* led_pattern){
+void generate_pattern(volatile int* led_pattern){
   for(int i=0; i<4; i++){
     led_pattern[i] = rng(2);
   }
 }
 
-void reset_pattern(int* led_pattern, int* led_pressed){
+void reset_pattern(volatile int* led_pattern, volatile int* led_pressed){
   for(int i=0; i<4; i++){
     led_pressed[i] = 0;
   }
@@ -55,7 +55,7 @@ void reset_led_status(int* lnStatus, uint8_t* lnPin){
   interrupts();
 }
 
-void apply_led_status(int* lnStatus, uint8_t* lnPin, int* lnPattern){
+void apply_led_status(int* lnStatus, uint8_t* lnPin, volatile int* lnPattern){
   noInterrupts();
   for(int i=0; i<4; i++){
     set_led(lnStatus, lnPin, i, lnPattern[i]);
@@ -63,7 +63,7 @@ void apply_led_status(int* lnStatus, uint8_t* lnPin, int* lnPattern){
   interrupts();
 }
 
-int check_score(int* pattern, int* pressed){
+int check_score(volatile int* pattern, volatile int* pressed){
   for(int i=0; i<4; i++){
     if(pattern[i] != pressed[i]) {
       return 0;
