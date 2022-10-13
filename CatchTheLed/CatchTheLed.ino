@@ -34,7 +34,7 @@
 #define MINIMUM_INSERT_TIME 1500
 // modifiers in ms
 #define DIFF_MODIFIER 200
-#define DIFF_PROG_MODIFIER 15
+#define DIFF_PROG_MODIFIER 30
 
 // time to wait for a new game to start
 #define END_GAME_WAIT 10000
@@ -183,7 +183,7 @@ void loop() {
       Serial.println("GO !");
       sent = 1;
     }
-    unsigned long timeSeqDisplay = (currentTimeSeqDisplay - DIFF_MODIFIER*get_difficulty()) < 0 ? MINIMUM_SEQ_TIME : (currentTimeSeqDisplay - DIFF_MODIFIER*get_difficulty());
+    unsigned long timeSeqDisplay = (currentTimeSeqDisplay - DIFF_MODIFIER*get_difficulty()) < MINIMUM_SEQ_TIME ? MINIMUM_SEQ_TIME : (currentTimeSeqDisplay - DIFF_MODIFIER*get_difficulty());
     delay(rng(START_WAIT_RANGE) + MINIMUM_WAIT_TIME);
     apply_led_status(lnStatus, lnPin, lnPattern);
     delay(timeSeqDisplay);
@@ -195,7 +195,7 @@ void loop() {
 
   } else if (currentState == INSERT) {
 
-    unsigned long timeToInsert = (currentTimeToInsert - DIFF_MODIFIER*get_difficulty()) < 0 ? MINIMUM_INSERT_TIME : (currentTimeToInsert - DIFF_MODIFIER*get_difficulty());
+    unsigned long timeToInsert = (currentTimeToInsert - DIFF_MODIFIER*get_difficulty()) < MINIMUM_INSERT_TIME ? MINIMUM_INSERT_TIME : (currentTimeToInsert - DIFF_MODIFIER*get_difficulty());
     apply_led_status(lnStatus, lnPin, lnPressed);
     if (millis() - systemTimeAfterDisplay >= timeToInsert) {
       if (check_score(lnPattern, lnPressed)) {
