@@ -56,7 +56,7 @@ uint8_t buttonPin[] = { B1_PIN, B2_PIN, B3_PIN, B4_PIN };
 // Green leds pin position
 uint8_t lnPin[] = { L1_PIN, L2_PIN, L3_PIN, L4_PIN };
 
-uint8_t timeReduction[] = {0, 200, 400, 800};
+int timeReduction[] = {0, 200, 400, 800};
 
 volatile int currentState;
 unsigned long currentTimeSeqDisplay;
